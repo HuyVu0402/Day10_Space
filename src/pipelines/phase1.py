@@ -56,7 +56,7 @@ def main() -> None:
         "clean_csv": str(settings.paths.clean_csv),
         "clean_json": str(settings.paths.clean_json),
     }
-    write_json(settings.paths.reports_dir / "c2_integration_summary.json", source_summary)
+    write_json(settings.paths.baseline_report.parent / "c2_integration_summary.json", source_summary)
 
     print("C2 integration check passed.")
     print(f"raw_records={len(records)}")
