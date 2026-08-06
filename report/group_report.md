@@ -29,8 +29,8 @@ rows. Nó làm Token F1 và judge accuracy giảm từ 1.00 xuống 0.70, mean j
 giảm từ 5.0 xuống 3.8; retrieval hit rate vẫn 1.00 vì tài liệu bị ảnh hưởng vẫn
 còn trong index. Repair chạy lại cleaning từ raw snapshot, không gọi lại API, và
 phục hồi các metric trả lời về baseline. Hạn chế còn lại là 2/24 baseline records
-đã vượt ngưỡng freshness 180 ngày; do đó quality baseline/repaired chưa PASS toàn
-bộ. Không coi đây là kết quả giả hay đã được xử lý xong.
+đã vượt ngưỡng freshness 180 ngày; freshness được báo riêng với quality checks.
+Baseline/repaired quality PASS, nhưng freshness status vẫn là `is_fresh=false`.
 
 ## 3. Kiến trúc và data contract
 
@@ -75,7 +75,7 @@ test set được tái sử dụng ở các lần chạy bình thường; không
 | `data/embeddings/papers_embeddings.json` | Có |
 | `data/eval/test_set.json` | Có; frozen, 10 questions |
 | `data/results/baseline_metrics.json`, `baseline_answers.json` | Có |
-| `data/quality/baseline_quality.json`, `freshness_report.json` | Có; freshness FAIL |
+| `data/quality/baseline_quality.json`, `freshness_report.json` | Có; quality PASS, freshness `is_fresh=false` |
 | `data/reports/phase1_report.md` | Có |
 
 | Metric | Baseline |
@@ -86,14 +86,17 @@ test set được tái sử dụng ở các lần chạy bình thường; không
 | Mean judge score | 5.00 |
 | Ragas | Skipped (`RUN_RAGAS` chưa bật) |
 
-Baseline schema, completeness, uniqueness và validity đều PASS. Freshness FAIL vì
-2/24 records vượt threshold 180 ngày (`oldest_published: 2026-01-01`).
+Baseline schema, completeness, uniqueness và validity đều PASS. Freshness report
+ghi `is_fresh=false` vì 2/24 records vượt threshold 180 ngày
+(`oldest_published: 2026-01-01`). Freshness là signal riêng, không tính vào
+quality pass/fail.
 
 ## 6. Corruption, repair và comparison
 
 | Metric/signal | Baseline | Corrupted | Repaired |
 | --- | ---: | ---: | ---: |
 | Rows | 24 | 26 | 24 |
+| Quality status | PASS | FAIL | PASS |
 | Retrieval hit rate | 1.00 | 1.00 | 1.00 |
 | Mean Token F1 | 1.00 | 0.70 | 1.00 |
 | Judge accuracy | 1.00 | 0.70 | 1.00 |
@@ -107,14 +110,15 @@ document IDs trong frozen ground truth bị ảnh hưởng. Corruption làm gi�
 câu trả lời dù hit rate không giảm; điều này cho thấy chỉ số retrieval một mình
 không đủ để phản ánh tác động của data quality. Repair từ raw snapshot phục hồi
 Token F1, judge accuracy và judge score về baseline, đồng thời xóa duplicates và
-khôi phục summaries. Freshness repaired vẫn FAIL vì nó tái tạo đúng baseline có 2
-record stale.
+khôi phục summaries. Freshness repaired vẫn `is_fresh=false` vì nó tái tạo đúng
+baseline có 2 record stale; đây là tín hiệu freshness gốc, không phải lỗi do
+corruption còn sót lại.
 
 ## 7. Giới hạn và việc cần làm trước khi nộp
 
 | Giới hạn | Ảnh hưởng | Hướng xử lý |
 | --- | --- | --- |
-| 2 baseline records stale | Baseline/repaired quality không PASS toàn bộ | R2/R3 lọc hoặc thay bằng source records trong 180 ngày, sau đó chạy lại cả hai flow |
+| 2 baseline records stale | Freshness baseline/repaired là `is_fresh=false` | R2/R3 lọc hoặc thay bằng source records trong 180 ngày nếu yêu cầu freshness PASS tuyệt đối |
 | Ragas chưa bật | Không có điểm Ragas | Bật `RUN_RAGAS=1` nếu provider/dependency phù hợp |
 | LLM judge có thể fallback khi provider lỗi | Kết quả judge cần ghi rõ cơ chế | Giữ `.env` hợp lệ và ghi nhận provider/model ở lần chạy nộp |
 
@@ -125,6 +129,6 @@ record stale.
 - [x] Ba trạng thái dùng cùng frozen evaluation set.
 - [x] Metrics trong báo cáo đọc từ JSON artifact thực tế.
 - [x] Repair dùng raw snapshot, không refetch API.
-- [ ] Xử lý 2 baseline stale records và chạy lại để baseline/repaired quality PASS.
+- [x] Baseline/repaired quality PASS; freshness stale records đã được báo riêng.
 - [ ] Điền MSSV của các thành viên còn lại nếu yêu cầu nộp.
 - [ ] Kiểm tra `.env`/API key không nằm trong Git trước khi nộp.
