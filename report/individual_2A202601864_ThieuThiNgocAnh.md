@@ -4,7 +4,7 @@
 
 | Thông tin         | Nội dung                                                        |
 | ------------------ | --------------------------------------------------------------- |
-| Họ và tên       | Thiều Thị Ngọc Ánh                                              |
+| Họ và tên       | Thiều Thị Ngọc Ánh                          |
 | MSSV               | 2A202601864                                                     |
 | Khóa/Lớp         | K4                                                              |
 | Tên nhóm         | Nhóm Space                                                       |
@@ -172,26 +172,26 @@ print('VERIFICATION SUCCESSFUL!')
 
 | Metric/signal          | Baseline | Corrupted | Repaired | Nhận xét của cá nhân |
 | ---------------------- | -------: | --------: | -------: | ------------------------- |
-| `retrieval_hit_rate` |      1.0 |       0.5 |      1.0 | Corruption (blank summary & noise) làm sụt giảm 50% hit rate; Repair khôi phục hoàn toàn. |
-| `mean_token_f1`      |     0.78 |      0.42 |     0.78 | Điểm F1 câu trả lời giảm mạnh khi ngữ cảnh bị hỏng; sau khi repair điểm số phục hồi. |
-| `judge_accuracy`     |      0.8 |       0.4 |      0.8 | Độ chính xác của LLM Judge giảm một nửa ở dữ liệu nhiễu và hồi phục khi dữ liệu sạch. |
-| `mean_judge_score`   |      4.2 |       2.1 |      4.2 | Điểm chất lượng trung bình (thang 5) bị kéo xuống do thiếu thông tin tóm tắt. |
-| Quality checks         |     Pass |      Fail |     Pass | Corrupted fail do phát hiện duplicate rows & blank summary; Repaired pass 100%. |
-| Freshness status     |     Pass |      Fail |     Pass | Corrupted fail do ngày `1970-01-01` kéo `age_days` lên quá ngưỡng; Repaired pass. |
+| `retrieval_hit_rate` |      1.00 |       1.00 |      1.00 | Giữ nguyên 1.00 vì tài liệu bị corruption vẫn nằm trong index; retrieval hit rate một mình chưa thể hiện hết tác động nhiễu. |
+| `mean_token_f1`      |      1.00 |       0.70 |      1.00 | Giảm từ 1.00 xuống 0.70 khi summary/metadata bị xóa hoặc nhiễu; sau repair khôi phục về 1.00. |
+| `judge_accuracy`     |      1.00 |       0.70 |      1.00 | Giảm từ 1.00 xuống 0.70 do chất lượng ngữ cảnh suy giảm; phục hồi hoàn toàn sau repair. |
+| `mean_judge_score`   |      5.00 |       3.80 |      5.00 | Điểm đánh giá trung bình giảm 1.2 điểm ở corrupted và khôi phục về 5.00 sau khi repair. |
+| Quality checks         |      PASS |       FAIL |      PASS | Corrupted FAIL do phát hiện 2 dòng trùng lặp (duplicate IDs) & 3 summary rỗng; Repaired PASS. |
+| Freshness status     |     stale |      stale |     stale | Baseline & Repaired có 2 dòng stale (>180 ngày); Corrupted tăng lên 4 dòng stale do Scenario 3. |
 
 ### Kết luận từ số liệu
 
 1. **Chuỗi nguyên nhân–bằng chứng 1 (Corruption Impact):**
-   [Data corruption xóa summary & chèn noise vào title] → [Quality check phát hiện blank summary & Freshness fail] → [`retrieval_hit_rate` giảm từ 1.0 xuống 0.5 và `judge_accuracy` giảm từ 0.8 xuống 0.4].
+   [Data corruption xóa summary, chèn noise vào title & ngày 1970-01-01] → [Quality check FAIL với 2 duplicate IDs, 3 blank summaries & stale rows tăng lên 4] → [Answer quality suy giảm: `mean_token_f1` và `judge_accuracy` giảm từ 1.00 xuống 0.70, `mean_judge_score` giảm từ 5.00 xuống 3.80].
 
 2. **Chuỗi nguyên nhân–bằng chứng 2 (Repair Recovery):**
-   [Repair action chạy lại cleaning pipeline từ raw snapshot] → [Quality check & Freshness signal phục hồi trạng thái Pass] → [Tất cả agent metrics phục hồi 100% về mức Baseline].
+   [Repair action chạy lại cleaning pipeline từ raw snapshot `crossref_records.json`] → [Quality check phục hồi trạng thái PASS (0 duplicate, 0 summary rỗng)] → [Tất cả agent metrics (`mean_token_f1`, `judge_accuracy`, `mean_judge_score`) phục hồi 100% về mức Baseline].
 
 - **Corruption nào ảnh hưởng rõ nhất và vì sao?**
-  *Scenario 1 (Blank Summary)* và *Scenario 2 (Title Truncation & Noise)* ảnh hưởng nặng nề nhất vì chúng trực tiếp làm biến đổi thông tin ngữ nghĩa trong `text_for_embedding`. Khi `text_for_embedding` bị mất thông tin hoặc tràn ngập token rác, Vector Distance trong ChromaDB bị sai lệch hoàn toàn, dẫn đến bước Retrieval lấy sai tài liệu.
+  *Scenario 1 (Blank Summary)* và *Scenario 2 (Title Truncation & Noise)* ảnh hưởng nặng nề nhất đến chất lượng câu trả lời của RAG Agent vì chúng trực tiếp làm suy giảm ngữ nghĩa trong `text_for_embedding`. Dù tài liệu vẫn được tìm thấy (`retrieval_hit_rate` giữ 1.00), nhưng ngữ cảnh (context) đưa vào prompt bị mất thông tin hoặc chứa nhiễu làm LLM sinh ra câu trả lời sai lệch.
 
 - **Kết quả nào khác với kỳ vọng ban đầu?**
-  Ban đầu dự đoán việc trùng lặp dòng (Scenario 4 - Duplicates) sẽ gây lỗi crash pipeline, nhưng thực tế ChromaDB vẫn xử lý được tuy nhiên làm giảm hiệu năng tìm kiếm và làm trôi kết quả top-k.
+  Ban đầu kỳ vọng `retrieval_hit_rate` sẽ giảm khi bị corruption, nhưng thực tế kết quả giữ nguyên 1.00 ở cả 3 trạng thái do các bản ghi bị lỗi vẫn tồn tại trong index. Điều này chứng minh rằng chỉ số `retrieval_hit_rate` đơn lẻ là chưa đủ để quan sát chất lượng RAG; cần phải kết hợp thêm các metric đo chất lượng câu trả lời (`token_f1`, `judge_accuracy`) và tín hiệu Data Quality. Baseline/Repaired ghi `is_fresh=false` (2 stale rows) là tín hiệu thật từ dữ liệu nguồn gốc, không phải lỗi của pipeline.
 
 ---
 
