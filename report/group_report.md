@@ -72,8 +72,8 @@ Các contract dưới đây được chốt cho C1 và không tự ý đổi sau
 
 | Contract | Owner chính | Người nhận | Điều kiện bàn giao |
 | --- | --- | --- | --- |
-| Raw records | Mạnh | Ánh, Huy | JSON hợp lệ, `paper_id` ổn định, đủ `title`, `summary`, `authors`, `published`, `abs_url` để clean/repair offline |
-| Clean records | Ánh | Sơn, Phương, Huy | Có đủ các trường bắt buộc, không duplicate `paper_id`, `text_for_embedding` không rỗng |
+| Raw records | Mạnh | Ánh, Huy | JSON hợp lệ, `paper_id` ổn định, non-null và unique, đủ `title`, `summary`, `authors`, `published`, `abs_url` để clean/repair offline |
+| Clean records | Ánh | Sơn, Phương, Huy | Có đủ các trường bắt buộc, `paper_id` non-null và unique, `text_for_embedding` không rỗng |
 | Evaluation set | Phương | Sơn, Huy | `data/eval/test_set.json` có 5-10 câu factual, mọi `ground_truth_doc_ids` tồn tại trong clean data |
 | Agent results | Sơn | Phương, Huy | Mỗi câu có `answer`, `retrieved_doc_ids`, `contexts`, `provider`, `model`; lỗi LLM phải có dạng có thể lưu |
 | Aggregate metrics | Phương | Huy | JSON có `dataset_state`, `question_count`, `retrieval_hit_rate`, `mean_token_f1`, `judge_accuracy`, `mean_judge_score` |
@@ -82,8 +82,8 @@ Schema tối thiểu đã chốt:
 
 | Artifact | Trường bắt buộc |
 | --- | --- |
-| Raw record | `paper_id`, `title`, `summary`, `authors`, `published`, `abs_url` |
-| Clean record | `paper_id`, `title`, `summary`, `published`, `authors_joined`, `categories_joined`, `age_days`, `text_for_embedding`, `abs_url`, `pdf_url` |
+| Raw record | `paper_id`, `title`, `summary`, `authors`, `published`, `abs_url`; `paper_id` phải non-null và unique |
+| Clean record | `paper_id`, `title`, `summary`, `published`, `authors_joined`, `categories_joined`, `age_days`, `text_for_embedding`, `abs_url`, `pdf_url`; `paper_id` phải non-null và unique |
 | Evaluation sample | `id`, `question_type`, `question`, `ground_truth`, `ground_truth_doc_ids` |
 | Agent result | `answer`, `retrieved_doc_ids`, `contexts`, `provider`, `model` |
 | Aggregate metrics | `dataset_state`, `question_count`, `retrieval_hit_rate`, `mean_token_f1`, `judge_accuracy`, `mean_judge_score` |
@@ -125,7 +125,7 @@ Trạng thái dataset dùng trong toàn bộ bài:
 
 Quy tắc C1 bắt buộc:
 
-- `paper_id` giữ nguyên xuyên suốt raw -> clean -> index -> test set -> answers.
+- `paper_id` là khóa liên kết xuyên suốt raw -> clean -> index -> test set -> answers và ba trạng thái `baseline`/`corrupted`/`repaired`; mọi dataset phải kiểm tra `paper_id` non-null và unique.
 - `data/eval/test_set.json` được đóng băng từ C2; C3 và C4 chỉ load lại, không sinh lại hoặc sửa nội dung.
 - Baseline, corrupted và repaired dùng cùng test set, embedding model, `top_k`, LLM model và evaluator.
 - Corruption không sửa `data/raw/` hoặc clean baseline.

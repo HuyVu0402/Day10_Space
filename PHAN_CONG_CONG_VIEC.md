@@ -121,7 +121,7 @@ flowchart LR
 
 ## 6. Ma trận công việc qua từng checkpoint
 
-| Checkpoint | R1 — Bạn | R2 — Mạnh | R3 — Ánh | R4 — Sơn | R5 — Phương |
+| Checkpoint | R1 — Huy | R2 — Mạnh | R3 — Ánh | R4 — Sơn | R5 — Phương |
 |---|---|---|---|---|---|
 | C0 | Setup repo, chia TODO, quy ước Git | Rà Crossref và kết nối API | Rà cleaning/corruption | Rà retrieval, ChromaDB, LLM | Rà eval, metrics, quality |
 | C1 | Chốt contract và bảng phân công | Chốt Raw Schema | Chốt Clean Schema | Chốt retrieval/agent schema | Chốt eval/metrics schema |
