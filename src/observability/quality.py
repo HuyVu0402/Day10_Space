@@ -70,19 +70,10 @@ def run_data_quality_checks(df: pd.DataFrame, settings: Settings, report_name: s
         invalid_dates = int((~valid_dates).sum())
         add_check("published_iso_date", invalid_dates == 0, invalid_dates, "0 invalid YYYY-MM-DD dates", "validity")
 
-    if "age_days" in df.columns:
-        stale_rows = int((pd.to_numeric(df["age_days"], errors="coerce") > settings.freshness_threshold_days).sum())
-        add_check(
-            "freshness_threshold",
-            stale_rows == 0,
-            stale_rows,
-            f"0 rows older than {settings.freshness_threshold_days} days",
-            "freshness",
-        )
-
     report = {
         "report_name": report_name,
         "total_rows": row_count,
+        "freshness_evaluated_separately": True,
         "passed": all(check["passed"] for check in checks),
         "checks": checks,
     }
