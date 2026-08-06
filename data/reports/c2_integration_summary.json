@@ -1,0 +1,9 @@
+{
+  "raw_records": 24,
+  "clean_records": 24,
+  "test_set_samples": 10,
+  "test_set_path": "D:\\CODE\\AITHUCCHIEN\\LABS\\Day10_Space\\data\\eval\\test_set.json",
+  "test_set_reused": true,
+  "clean_csv": "D:\\CODE\\AITHUCCHIEN\\LABS\\Day10_Space\\data\\clean\\papers_clean.csv",
+  "clean_json": "D:\\CODE\\AITHUCCHIEN\\LABS\\Day10_Space\\data\\clean\\papers_clean.json"
+}
