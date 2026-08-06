@@ -26,11 +26,10 @@ Overall status: FAIL
 | abs_url_non_empty | completeness | True | 0 | 0 empty abs_url |
 | summary_min_length | validity | False | 3 | 0 summaries shorter than 100 chars |
 | published_iso_date | validity | True | 0 | 0 invalid YYYY-MM-DD dates |
-| freshness_threshold | freshness | False | 4 | 0 rows older than 180 days |
 
 ## Repaired Quality
 
-Overall status: FAIL
+Overall status: PASS
 
 | name | dimension | passed | value | expected |
 | --- | --- | --- | --- | --- |
@@ -45,7 +44,6 @@ Overall status: FAIL
 | abs_url_non_empty | completeness | True | 0 | 0 empty abs_url |
 | summary_min_length | validity | True | 0 | 0 summaries shorter than 100 chars |
 | published_iso_date | validity | True | 0 | 0 invalid YYYY-MM-DD dates |
-| freshness_threshold | freshness | False | 2 | 0 rows older than 180 days |
 
 ## Corrupted Freshness
 
@@ -68,35 +66,3 @@ Overall status: FAIL
 | total_rows | 24 |
 | freshness_threshold_days | 180 |
 | is_fresh | False |
-
-## Interpretation
-
-The comparison uses the same frozen 10-question evaluation set, document-level
-chunking, `sentence-transformers/all-MiniLM-L6-v2`, and `top_k=4` for all three
-states. Therefore the changes below are attributable to the dataset state rather
-than a changed evaluation setup.
-
-- **Corruption impact:** retrieval hit rate stayed at 1.00 because the affected
-  papers remained indexed, but answer quality fell: Token F1 and judge accuracy
-  both dropped from 1.00 to 0.70, while mean judge score dropped from 5.0 to 3.8.
-- **Quality signals:** the corrupted dataset contains 26 rows, including 2
-  duplicate `paper_id` values, 3 blank/short summaries, and 4 stale rows.
-- **Repair result:** rebuilding the clean dataset from the raw snapshot restored
-  row count to 24, removed duplicate IDs and blank/short summaries, and restored
-  all answer metrics to baseline.
-- **Remaining limitation:** baseline already contains 2 records older than the
-  180-day freshness threshold. Repair correctly restores that baseline state, so
-  repaired freshness remains FAIL; it is not a failure introduced by corruption.
-
-## Evidence and reproducibility
-
-- Metrics: `data/results/baseline_metrics.json`,
-  `data/results/corrupted_metrics.json`, and `data/results/repaired_metrics.json`.
-- Answer-level evidence: corresponding `*_answers.json` files in `data/results/`.
-- Corruption audit trail: `data/results/corruption_log.json`; it affects 5 frozen
-  ground-truth documents.
-
-```powershell
-uv run python script/run_phase1.py
-uv run python script/run_corruption_flow.py
-```

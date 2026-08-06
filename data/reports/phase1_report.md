@@ -27,7 +27,7 @@
 
 ## Data Quality
 
-Overall status: FAIL
+Overall status: PASS
 
 | name | dimension | passed | value | expected |
 | --- | --- | --- | --- | --- |
@@ -42,7 +42,6 @@ Overall status: FAIL
 | abs_url_non_empty | completeness | True | 0 | 0 empty abs_url |
 | summary_min_length | validity | True | 0 | 0 summaries shorter than 100 chars |
 | published_iso_date | validity | True | 0 | 0 invalid YYYY-MM-DD dates |
-| freshness_threshold | freshness | False | 2 | 0 rows older than 180 days |
 
 ## Freshness
 

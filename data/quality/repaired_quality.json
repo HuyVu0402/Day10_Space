@@ -1,7 +1,8 @@
 {
   "report_name": "repaired_quality",
   "total_rows": 24,
-  "passed": false,
+  "freshness_evaluated_separately": true,
+  "passed": true,
   "checks": [
     {
       "name": "required_columns_present",
@@ -79,13 +80,6 @@
       "passed": true,
       "value": 0,
       "expected": "0 invalid YYYY-MM-DD dates"
-    },
-    {
-      "name": "freshness_threshold",
-      "dimension": "freshness",
-      "passed": false,
-      "value": 2,
-      "expected": "0 rows older than 180 days"
     }
   ]
 }

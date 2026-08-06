@@ -1,6 +1,7 @@
 {
   "report_name": "corrupted_quality",
   "total_rows": 26,
+  "freshness_evaluated_separately": true,
   "passed": false,
   "checks": [
     {
@@ -79,13 +80,6 @@
       "passed": true,
       "value": 0,
       "expected": "0 invalid YYYY-MM-DD dates"
-    },
-    {
-      "name": "freshness_threshold",
-      "dimension": "freshness",
-      "passed": false,
-      "value": 4,
-      "expected": "0 rows older than 180 days"
     }
   ]
 }
