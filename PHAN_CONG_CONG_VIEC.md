@@ -18,12 +18,21 @@
 2. Không tự ý đổi data contract sau Checkpoint C1.
 3. `paper_id` phải giữ nguyên xuyên suốt raw → clean → index → test set → answers.
 4. `data/eval/test_set.json` phải được đóng băng ở C2. C3 và C4 chỉ được đọc lại, không sinh lại hoặc sửa nội dung.
-5. Baseline, corrupted và repaired phải dùng cùng test set, embedding model, `top_k`, LLM model và evaluator.
+5. Baseline, corrupted và repaired phải dùng cùng test set, chunking strategy, embedding model, `top_k`, LLM model và evaluator.
 6. Corruption không được sửa raw snapshot hoặc clean baseline.
 7. Repair phải dựng lại từ `data/raw/crossref_records.json`, không fetch API lần nữa và không sửa trực tiếp corrupted CSV.
 8. Không commit `.env`, API key, `chroma_db/` lớn hoặc dữ liệu không được yêu cầu.
 9. Không điền metrics giả vào báo cáo; mọi số liệu phải lấy từ JSON sinh ra khi chạy thật.
 10. Trước khi bàn giao, mỗi người phải chạy test hoặc lệnh kiểm tra liên quan và ghi lại minh chứng.
+
+Quy ước retrieval dùng chung từ C1 trở đi:
+
+- Chunking strategy: document-level chunking, mỗi clean paper là một document/chunk duy nhất.
+- Chunk content: dùng nguyên `text_for_embedding` từ clean dataset.
+- Document identity: Chroma metadata phải có `paper_id`; retrieval hit đối chiếu bằng `paper_id`.
+- Embedding model: `sentence-transformers/all-MiniLM-L6-v2`.
+- Retrieval `top_k`: `4`.
+- Không đổi chunking strategy hoặc `top_k` riêng cho một trạng thái khi so sánh baseline/corrupted/repaired.
 
 ## 3. Data contracts bắt buộc
 
@@ -53,6 +62,17 @@ Các trường bắt buộc:
 paper_id, title, summary, published, authors_joined,
 categories_joined, age_days, text_for_embedding, abs_url, pdf_url
 ```
+
+Quy tắc `text_for_embedding`:
+
+```text
+Title: <title>
+Authors: <authors_joined>
+Categories: <categories_joined>
+Summary: <summary>
+```
+
+R4 sẽ index toàn bộ `text_for_embedding` như một document/chunk duy nhất cho mỗi `paper_id`.
 
 ### 3.3 Evaluation sample — R5 quản lý
 
@@ -90,6 +110,20 @@ categories_joined, age_days, text_for_embedding, abs_url, pdf_url
   "mean_judge_score": 4.1
 }
 ```
+
+### 3.6 Retrieval configuration — R1/R4/R5 cùng tuân thủ
+
+```json
+{
+  "chunking_strategy": "document_level",
+  "chunk_source_column": "text_for_embedding",
+  "document_id": "paper_id",
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "top_k": 4
+}
+```
+
+Các metric retrieval phải dùng cấu hình này cho cả `baseline`, `corrupted` và `repaired`.
 
 ## 4. Sơ đồ checkpoint của toàn nhóm
 
@@ -184,7 +218,7 @@ flowchart LR
 ## Prompt khởi động dành cho R1
 
 ```text
-Bạn đang hỗ trợ tôi với vai trò R1 — Integration & Release Owner của RAG Data Quality Lab.
+Integration & Release Owner của RAG Data Quality Lab.
 
 Phạm vi tôi sở hữu:
 - src/pipelines/phase1.py
@@ -293,7 +327,7 @@ Hãy triển khai trong đúng phạm vi, chạy kiểm tra và viết phần b�
 - Bỏ bản ghi thiếu title hoặc summary dưới 100 ký tự.
 - Loại HTML/XML, chuẩn hóa khoảng trắng.
 - Gộp authors/categories, chuẩn hóa ngày và tính `age_days`.
-- Tạo `text_for_embedding`, loại duplicate theo `paper_id`.
+- Tạo `text_for_embedding` đúng contract, loại duplicate theo `paper_id`.
 - Lưu `papers_clean.csv` và `papers_clean.json`.
 
 ### C3
@@ -328,7 +362,7 @@ Checkpoint hiện tại: [C0/C1/C2/C3/C4/C5]. Yêu cầu:
 1. Nhận raw records từ Mạnh và tuân thủ Raw/Clean Schema đã chốt.
 2. Không sửa retrieval, evaluation hoặc pipeline.
 3. Cleaning phải deterministic và giữ paper_id ổn định.
-4. Tạo text_for_embedding đúng mẫu Title | Authors | Summary.
+4. Tạo `text_for_embedding` đúng mẫu `Title`, `Authors`, `Categories`, `Summary` đã chốt.
 5. Corruption dùng seed cố định, tạo file mới và chạm ground_truth_doc_ids.
 6. Không sửa raw snapshot, clean baseline hoặc frozen test set.
 7. Repair phải chạy lại cleaning từ data/raw/crossref_records.json.
@@ -363,7 +397,7 @@ Hãy kiểm tra contract, triển khai đúng phạm vi và báo cáo artifact c
 
 - Build thử index từ `text_for_embedding`.
 - Kiểm tra metadata tương thích ChromaDB và luôn chứa `paper_id`.
-- Query top-k thử và xác minh retrieved IDs.
+- Query `top_k=4` thử và xác minh retrieved IDs.
 
 ### C3
 
@@ -393,9 +427,9 @@ Checkpoint hiện tại: [C0/C1/C2/C3/C4/C5].
 Yêu cầu:
 1. Nhận clean/corrupted/repaired dataset từ Ánh, không tự thay đổi dữ liệu nguồn.
 2. Không sửa frozen test set hoặc evaluation metrics.
-3. Index text_for_embedding và lưu paper_id trong metadata.
+3. Index mỗi `text_for_embedding` như một document/chunk duy nhất và lưu `paper_id` trong metadata.
 4. Mỗi dataset state phải có collection/index độc lập; không để vector cũ lẫn vào.
-5. Giữ nguyên embedding model, top-k, prompt và LLM model khi so sánh.
+5. Giữ nguyên document-level chunking, embedding model, `top_k=4`, prompt và LLM model khi so sánh.
 6. Output mỗi câu phải có answer, retrieved_doc_ids, contexts, provider và model.
 7. Nếu LLM lỗi, trả lỗi có cấu trúc để pipeline vẫn có thể lưu retrieval evidence.
 8. Chạy query kiểm tra thủ công và bàn giao kết quả cho Phương/R1.
@@ -464,7 +498,7 @@ Checkpoint hiện tại: [C0/C1/C2/C3/C4/C5]. Yêu cầu:
 2. Không sửa ingestion, retrieval hoặc pipeline nếu chưa được đồng ý.
 3. Test set phải gồm câu factual, có ground truth trực tiếp và doc IDs hợp lệ.
 4. Nếu test_set.json đã tồn tại thì chỉ load, không tạo lại hoặc sửa.
-5. Ba trạng thái dùng chung test set và cùng cách tính metric.
+5. Ba trạng thái dùng chung test set, chunking strategy, `top_k=4` và cùng cách tính metric.
 6. Báo cáo chỉ dùng số liệu đọc từ JSON thực tế, không hard-code số minh họa.
 7. Nếu LLM judge lỗi, vẫn hoàn thành retrieval hit rate, Token F1 và quality checks.
 8. Corrupted phải có tín hiệu FAIL; repaired được đối chiếu với baseline.
@@ -552,4 +586,3 @@ Mỗi thành viên dùng mẫu này khi hoàn thành một checkpoint:
 - Báo cáo Markdown khớp dữ liệu JSON thực tế.
 - Mỗi thành viên có code, artifact và báo cáo đúng phần sở hữu.
 - Repository sạch, tái hiện được và không chứa thông tin nhạy cảm.
-

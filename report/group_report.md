@@ -88,6 +88,17 @@ Schema tối thiểu đã chốt:
 | Agent result | `answer`, `retrieved_doc_ids`, `contexts`, `provider`, `model` |
 | Aggregate metrics | `dataset_state`, `question_count`, `retrieval_hit_rate`, `mean_token_f1`, `judge_accuracy`, `mean_judge_score` |
 
+Retrieval/chunking contract:
+
+| Thành phần | Quy ước đã chốt |
+| --- | --- |
+| Chunking strategy | Document-level chunking: mỗi clean paper là một document/chunk duy nhất |
+| Chunk content | Dùng nguyên `text_for_embedding` từ clean dataset |
+| Document identity | Chroma metadata bắt buộc có `paper_id`; retrieval hit đối chiếu bằng `paper_id` |
+| Embedding model | `sentence-transformers/all-MiniLM-L6-v2` |
+| Retrieval `top_k` | `4` |
+| So sánh ba trạng thái | Baseline/corrupted/repaired phải giữ cùng chunking strategy, embedding model, `top_k`, test set và evaluator |
+
 Raw record optional fields hiện có trong `data/raw/crossref_records.json`:
 
 ```text
@@ -127,7 +138,7 @@ Quy tắc C1 bắt buộc:
 
 - `paper_id` là khóa liên kết xuyên suốt raw -> clean -> index -> test set -> answers và ba trạng thái `baseline`/`corrupted`/`repaired`; mọi dataset phải kiểm tra `paper_id` non-null và unique.
 - `data/eval/test_set.json` được đóng băng từ C2; C3 và C4 chỉ load lại, không sinh lại hoặc sửa nội dung.
-- Baseline, corrupted và repaired dùng cùng test set, embedding model, `top_k`, LLM model và evaluator.
+- Baseline, corrupted và repaired dùng cùng test set, document-level chunking, embedding model, `top_k=4`, LLM model và evaluator.
 - Corruption không sửa `data/raw/` hoặc clean baseline.
 - Repair không gọi lại Crossref API; chỉ dùng raw snapshot đã lưu.
 - Báo cáo không ghi số liệu minh họa; mọi metrics phải đọc từ JSON artifacts thực tế.
@@ -247,6 +258,7 @@ Giải thích cách nhóm tạo `text_for_embedding`, document ID và `age_days`
 | Ground-truth document ID                 | Mỗi ID phải tồn tại trong clean baseline trước khi đóng băng test set |
 | Embedding model                          | `sentence-transformers/all-MiniLM-L6-v2` |
 | Vector store/collection                  | `papers-baseline`, `papers-corrupted`, `papers-repaired` |
+| Chunking strategy                         | Document-level: mỗi paper là một chunk/document từ `text_for_embedding` |
 | Retrieval`top_k`                       | `4` |
 | LLM provider/model                       | Theo `.env`; phải giữ nguyên giữa ba trạng thái khi so sánh |
 | Test set dùng chung cho ba trạng thái | `data/eval/test_set.json` |
