@@ -1,0 +1,91 @@
+{
+  "report_name": "corrupted_quality",
+  "total_rows": 26,
+  "passed": false,
+  "checks": [
+    {
+      "name": "required_columns_present",
+      "dimension": "schema",
+      "passed": true,
+      "value": [],
+      "expected": "no missing required columns"
+    },
+    {
+      "name": "row_count_positive",
+      "dimension": "completeness",
+      "passed": true,
+      "value": 26,
+      "expected": "> 0"
+    },
+    {
+      "name": "paper_id_non_null",
+      "dimension": "completeness",
+      "passed": true,
+      "value": 0,
+      "expected": "0 null or empty paper_id"
+    },
+    {
+      "name": "paper_id_unique",
+      "dimension": "uniqueness",
+      "passed": false,
+      "value": 2,
+      "expected": "0 duplicate paper_id"
+    },
+    {
+      "name": "title_non_empty",
+      "dimension": "completeness",
+      "passed": true,
+      "value": 0,
+      "expected": "0 empty title"
+    },
+    {
+      "name": "summary_non_empty",
+      "dimension": "completeness",
+      "passed": false,
+      "value": 3,
+      "expected": "0 empty summary"
+    },
+    {
+      "name": "published_non_empty",
+      "dimension": "completeness",
+      "passed": true,
+      "value": 0,
+      "expected": "0 empty published"
+    },
+    {
+      "name": "text_for_embedding_non_empty",
+      "dimension": "completeness",
+      "passed": true,
+      "value": 0,
+      "expected": "0 empty text_for_embedding"
+    },
+    {
+      "name": "abs_url_non_empty",
+      "dimension": "completeness",
+      "passed": true,
+      "value": 0,
+      "expected": "0 empty abs_url"
+    },
+    {
+      "name": "summary_min_length",
+      "dimension": "validity",
+      "passed": false,
+      "value": 3,
+      "expected": "0 summaries shorter than 100 chars"
+    },
+    {
+      "name": "published_iso_date",
+      "dimension": "validity",
+      "passed": true,
+      "value": 0,
+      "expected": "0 invalid YYYY-MM-DD dates"
+    },
+    {
+      "name": "freshness_threshold",
+      "dimension": "freshness",
+      "passed": false,
+      "value": 4,
+      "expected": "0 rows older than 180 days"
+    }
+  ]
+}

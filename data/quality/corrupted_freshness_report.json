@@ -1,0 +1,8 @@
+{
+  "latest_published": "2026-08-01",
+  "oldest_published": "1970-01-01",
+  "stale_rows": 4,
+  "total_rows": 26,
+  "freshness_threshold_days": 180,
+  "is_fresh": false
+}

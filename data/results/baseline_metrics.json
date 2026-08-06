@@ -6,5 +6,7 @@
   "mean_judge_score": 5,
   "ragas": {
     "skipped": "Set RUN_RAGAS=1 to enable the slower Ragas pass."
-  }
+  },
+  "dataset_state": "baseline",
+  "question_count": 10
 }
