@@ -1,4 +1,4 @@
-# Member Role Report - Day 10: Data Pipeline & Data Observability
+# Báo cáo cá nhân - Day 10: Data Pipeline & Data Observability
 
 ## 1. Thông tin cá nhân
 
@@ -14,158 +14,152 @@
 
 ## 2. Vai trò và phạm vi công việc
 
-### Phần việc sở hữu
+Vai trò R1 chịu trách nhiệm tích hợp các phần của R2, R3, R4 và R5 thành pipeline chạy được end-to-end. Phạm vi chính của tôi gồm:
 
-| Module/deliverable | File/hàm phụ trách | Input nhận vào | Output bàn giao | Trạng thái |
-| --- | --- | --- | --- | --- |
-| Contract và phân công nhóm | `report/group_report.md` | `PHAN_CONG_CONG_VIEC.md`, yêu cầu lab | Phân công role, data contract, artifact paths | Hoàn thành C1 |
-| C2 integration orchestration | `src/pipelines/phase1.py`, `script/run_phase1.py` | Raw records từ R2, clean logic từ R3, testset logic từ R5 | Raw -> clean -> frozen test set validation | Hoàn thành C2 |
-| Release evidence | `data/reports/c2_integration_summary.json` | Output C2 pipeline | Summary số record và trạng thái reuse test set | Hoàn thành C2 |
-| Corruption flow integration | `src/pipelines/corruption_flow.py` | Metrics, corrupted/repaired datasets | Comparison flow ba trạng thái | Chưa thực hiện, thuộc C4 |
-
-### Việc hỗ trợ ngoài phạm vi chính
-
-| Hoạt động | Thành viên/module được hỗ trợ | Kết quả |
+| Module / deliverable | File / artifact liên quan | Kết quả bàn giao |
 | --- | --- | --- |
-| Kiểm tra R2 C1 | R2 - Source Ingestion | Xác nhận raw records pass contract tối thiểu, phát hiện source lineage wrapper/date/category cần sửa |
-| Kiểm tra R3 C1 | R3 - Cleaning/Corruption | Xác nhận clean schema pass, phát hiện `categories_joined` fallback và `text_for_embedding` cần thống nhất |
-| Kiểm tra R4 C1 | R4 - Retrieval/RAG | Xác nhận embedding/index baseline có artifact, phát hiện agent result thiếu `provider`, `model` |
-| Triển khai R5 C1 | R5 - Evaluation/Observability | Tạo test set builder, quality/freshness checks và report functions; sinh `test_set.json`, quality/freshness artifacts |
+| Phân công và contract nhóm | `PHAN_CONG_CONG_VIEC.md`, `report/group_report.md` | Chốt role, data contract, artifact paths và checklist nghiệm thu |
+| Baseline pipeline | `src/pipelines/phase1.py`, `script/run_phase1.py` | Chạy raw -> clean -> index -> eval -> quality -> report |
+| Corruption/repair pipeline | `src/pipelines/corruption_flow.py`, `script/run_corruption_flow.py` | Chạy corrupted -> evaluate -> repair from raw -> evaluate -> compare |
+| Release evidence | `data/reports/phase1_report.md`, `data/reports/corruption_report.md`, JSON metrics | Đối chiếu artifact thật để hoàn thiện báo cáo nhóm |
+| Kiểm tra trước nộp | `git status`, artifact scan, secret scan | Xác nhận repo không track `.env`, không còn TODO trong `src`/`script` |
 
-## 3. Kết quả theo vai trò
+Ngoài phạm vi R1, tôi cũng hỗ trợ kiểm tra contract bàn giao của các role khác: raw lineage của R2, clean schema của R3, answer schema của R4, test set/metrics/quality của R5.
 
-| Nhiệm vụ đã thực hiện | File/hàm/artifact liên quan | Kết quả bàn giao | Cách xác minh |
-| --- | --- | --- | --- |
-| Chốt contract C1 | `report/group_report.md` | Raw, Clean, Evaluation, Agent Result, Metrics schema; quy tắc `paper_id` non-null/unique | Đọc mục C1 trong `report/group_report.md` |
-| Ghép C2 raw -> clean -> test set | `src/pipelines/phase1.py` | Entry point C2 chạy được bằng một lệnh | `PYTHONPATH=src ./.venv/Scripts/python.exe script/run_phase1.py` |
-| Xác minh frozen test set không bị ghi đè | `data/eval/test_set.json` | `test_set_reused=true` | `data/reports/c2_integration_summary.json` |
-| Xác minh ground truth IDs | `data/eval/test_set.json`, `data/clean/papers_clean.csv` | Không có `ground_truth_doc_ids` thiếu trong clean data | Script validation trong C2 |
+## 3. Kết quả theo checkpoint
 
-Output cụ thể đã tạo/giúp xác minh:
+| Checkpoint | Việc đã thực hiện với vai trò R1 | Kết quả |
+| --- | --- | --- |
+| C0 - Setup | Đọc cấu trúc repo, rà TODO/NotImplemented, xác định file theo owner | Không còn `TODO(student)`/`NotImplementedError` trong `src` và `script` |
+| C1 - Contract | Chốt contract raw, clean, evaluation, agent result, metrics và retrieval config | `paper_id` được dùng làm khóa xuyên suốt; `top_k=4`; document-level chunking |
+| C2 - Data & Frozen Eval | Kiểm tra raw -> clean -> frozen eval, xác minh ground truth IDs | 24 clean records, 10 eval samples, không có missing ground-truth docs |
+| C3 - Baseline | Chạy baseline pipeline end-to-end | Có baseline answers, metrics, quality/freshness và phase1 report |
+| C4 - Corruption & Repair | Chạy corruption/repair flow ba trạng thái | Có corrupted/repaired data, corruption log, metrics và comparison report |
+| C5 - Submission | Tổng hợp report, đối chiếu metrics JSON, kiểm tra trạng thái repo | Group report và individual report hoàn thiện |
 
-```text
-data/reports/c2_integration_summary.json
-raw_records=24
-clean_records=24
-test_set_samples=10
-test_set_reused=true
+## 4. Artifact đã tạo hoặc xác minh
+
+| Nhóm artifact | File |
+| --- | --- |
+| Raw data | `data/raw/crossref_response.json`, `data/raw/crossref_records.json` |
+| Clean data | `data/clean/papers_clean.csv`, `data/clean/papers_clean.json` |
+| Frozen eval | `data/eval/test_set.json` |
+| Baseline | `data/results/baseline_answers.json`, `data/results/baseline_metrics.json`, `data/reports/phase1_report.md` |
+| Corruption/Repair | `data/results/corruption_log.json`, `corrupted_*`, `repaired_*`, `data/reports/corruption_report.md` |
+| Quality/Freshness | `data/quality/baseline_quality.json`, `corrupted_quality.json`, `repaired_quality.json`, freshness reports |
+| Báo cáo | `report/group_report.md`, `report/individual_2A202601412_VuQuangHuy.md` |
+
+## 5. Lệnh đã chạy để xác minh
+
+Baseline pipeline:
+
+```powershell
+$env:PYTHONPATH='src'
+.\.venv\Scripts\python.exe script\run_phase1.py
 ```
 
-## 4. Giải thích phần kỹ thuật đã thực hiện
+Kết quả:
 
-### Vấn đề cần giải quyết
+```text
+Baseline pipeline complete.
+Metrics: data/results/baseline_metrics.json
+Report: data/reports/phase1_report.md
+```
 
-Vai trò R1 cần đảm bảo các phần do R2, R3 và R5 bàn giao có thể nối với nhau thành một luồng có kiểm chứng. Ở C2, trọng tâm là không chạy toàn bộ RAG/LLM ngay, mà xác minh contract quan trọng nhất: raw records đọc được, clean data đúng schema, frozen evaluation set tồn tại, và mọi `ground_truth_doc_ids` đều liên kết được với `paper_id` trong clean data.
+Corruption/repair pipeline:
 
-### Cách triển khai
+```powershell
+$env:PYTHONPATH='src'
+.\.venv\Scripts\python.exe script\run_corruption_flow.py
+```
 
-`src/pipelines/phase1.py` hiện thực hiện luồng C2:
+Kết quả:
 
-1. Load settings.
-2. Load `data/raw/crossref_records.json`, hoặc fetch lại nếu `REFRESH_SOURCE=true`.
-3. Gọi `build_clean_dataframe()` để tạo clean dataframe.
-4. Validate clean dataframe: đủ cột, không rỗng, `paper_id` non-null/unique, `text_for_embedding` không rỗng.
-5. Lưu `data/clean/papers_clean.csv` và `data/clean/papers_clean.json`.
-6. Gọi `build_test_set()`. Nếu `data/eval/test_set.json` đã tồn tại thì load lại, không ghi đè.
-7. Validate test set: đủ key bắt buộc, ground truth không rỗng, mọi `ground_truth_doc_ids` tồn tại trong clean data.
-8. Ghi `data/reports/c2_integration_summary.json`.
+```text
+Corruption/repair comparison complete.
+Report: data/reports/corruption_report.md
+```
 
-### Input, output và contract
+Lệnh Git Bash tương đương:
 
-| Thành phần | Mô tả |
-| --- | --- |
-| Input | `data/raw/crossref_records.json` với `paper_id`, `title`, `summary`, `authors`, `published`, `abs_url` |
-| Output | `papers_clean.csv`, `papers_clean.json`, `test_set.json`, `c2_integration_summary.json` |
-| Module phụ thuộc | `ingestion.crossref`, `ingestion.cleaning`, `evaluation.testset`, `core.config` |
-| Module sử dụng output | R4 dùng clean data để build index; R5 dùng test set để evaluate |
-| Điều kiện lỗi cần xử lý | Raw rỗng, clean data rỗng, thiếu cột clean, duplicate/null `paper_id`, test set thiếu doc ID |
+```bash
+PYTHONPATH=src ./.venv/Scripts/python.exe script/run_phase1.py
+PYTHONPATH=src ./.venv/Scripts/python.exe script/run_corruption_flow.py
+```
 
-### Cách xác minh
+## 6. Metrics và phân tích kết quả
+
+| Metric / Signal | Baseline | Corrupted | Repaired | Nhận xét |
+| --- | ---: | ---: | ---: | --- |
+| Rows | 24 | 26 | 24 | Corruption thêm duplicate rows, repair đưa về baseline |
+| Quality status | PASS | FAIL | PASS | Corrupted fail do duplicate ID và summary rỗng/ngắn |
+| Retrieval hit rate | 1.00 | 1.00 | 1.00 | Tài liệu ground truth vẫn còn trong index |
+| Mean Token F1 | 1.00 | 0.70 | 1.00 | Answer quality giảm rõ khi dữ liệu bị hỏng |
+| Judge accuracy | 1.00 | 0.70 | 1.00 | Judge cũng phản ánh suy giảm chất lượng |
+| Mean judge score | 5.00 | 3.80 | 5.00 | Repair phục hồi score về baseline |
+| Duplicate paper IDs | 0 | 2 | 0 | Quality check bắt được corruption |
+| Blank/short summaries | 0 | 3 | 0 | Summary bị hỏng làm answer metric giảm |
+| Stale rows | 2 | 4 | 2 | Freshness được báo riêng với quality |
+
+Kết quả chính là corrupted data làm giảm chất lượng câu trả lời dù retrieval hit rate không đổi. Điều này cho thấy RAG evaluation không nên chỉ nhìn hit rate; cần theo dõi thêm Token F1, judge score và data quality signals. Sau repair từ raw snapshot, metrics phục hồi về baseline, chứng minh raw snapshot có vai trò quan trọng trong khả năng tái lập và phục hồi dữ liệu.
+
+## 7. Quyết định kỹ thuật quan trọng
+
+### Giữ frozen test set xuyên suốt C3/C4
+
+Nếu mỗi lần đánh giá lại tạo câu hỏi mới, metrics baseline/corrupted/repaired sẽ không còn so sánh công bằng. Vì vậy pipeline luôn dùng `data/eval/test_set.json` đã đóng băng từ C2. R1 kiểm tra mọi `ground_truth_doc_ids` đều tồn tại trong clean data trước khi chạy evaluation.
+
+### Giữ cùng retrieval config
+
+Tất cả trạng thái dùng document-level chunking, `text_for_embedding`, embedding model `sentence-transformers/all-MiniLM-L6-v2` và `top_k=4`. Nhờ vậy, thay đổi metric phản ánh thay đổi dữ liệu chứ không phải thay đổi cấu hình retrieval.
+
+### Repair từ raw snapshot, không fetch lại API
+
+Corruption flow không gọi lại Crossref API khi repair. Repaired dataset được dựng lại từ `data/raw/crossref_records.json`, giúp so sánh công bằng và đảm bảo có thể audit.
+
+## 8. Blocker đã xử lý
+
+### Lỗi chạy Python trong Git Bash
+
+Lệnh Windows-style:
+
+```bash
+.\.venv\Scripts\python.exe script\run_phase1.py
+```
+
+không chạy đúng trong Git Bash. Cách chạy đúng là:
 
 ```bash
 PYTHONPATH=src ./.venv/Scripts/python.exe script/run_phase1.py
 ```
 
-- Kết quả mong đợi: pipeline C2 chạy qua, không ghi đè frozen test set, không có missing ground-truth docs.
-- Kết quả thực tế:
+### Lỗi mạng khi load embedding model trong sandbox
 
-```text
-C2 integration check passed.
-raw_records=24
-clean_records=24
-test_set_samples=10
-test_set_reused=True
-```
+Khi chạy pipeline, `sentence-transformers` cần truy cập/cache model từ HuggingFace. Trong sandbox, lệnh có thể lỗi socket. Tôi đã chạy lại ngoài sandbox để xác minh end-to-end và cả hai pipeline đều hoàn thành.
 
-- Artifact/log: `data/reports/c2_integration_summary.json`.
+## 9. Hiểu biết về luồng end-to-end
 
-## 5. Một quyết định kỹ thuật quan trọng
+1. R2 lấy dữ liệu từ Crossref và lưu raw snapshot. Raw response dùng để audit lineage, raw records dùng để R3 clean và repair offline.
+2. R3 clean dữ liệu thành schema ổn định, giữ `paper_id`, tạo `text_for_embedding` và loại bỏ duplicate.
+3. R4 dùng `text_for_embedding` để tạo embedding MiniLM, lưu vào ChromaDB, sau đó truy xuất `top_k=4` documents cho từng câu hỏi.
+4. R5 dùng frozen test set để tính retrieval hit rate, Token F1, judge metrics, quality và freshness.
+5. R1 tích hợp toàn bộ thành hai entrypoint: baseline pipeline và corruption/repair pipeline, sau đó đối chiếu report với artifact thật.
 
-- **Bối cảnh:** C2 cần kiểm tra tích hợp, nhưng C3 mới là baseline đầy đủ có embedding, agent và metrics.
-- **Các phương án đã cân nhắc:** Một là implement luôn full phase 1 end-to-end; hai là làm C2 guard trước để khóa raw -> clean -> frozen eval.
-- **Phương án đã chọn:** Làm C2 integration flow trước.
-- **Lý do:** Nếu test set bị ghi đè hoặc `ground_truth_doc_ids` không tồn tại trong clean data thì mọi metric C3/C4 sau này không đáng tin. Chặn lỗi này sớm giúp các role khác tích hợp an toàn hơn.
-- **Bằng chứng quyết định phù hợp:** `test_set_reused=True`, `missing_doc_ids=[]`, `paper_id_null=0`, `paper_id_duplicates=0`.
+## 10. Bài học rút ra
 
-Quyết định liên quan retrieval mà R1 cần giữ nhất quán khi tích hợp C3/C4: starter hiện dùng chiến thuật chunking ở mức document, tức mỗi paper clean là một document/chunk duy nhất lấy từ `text_for_embedding`, thay vì tách summary thành nhiều đoạn nhỏ. Cách này phù hợp với lab vì mỗi sample ground truth gắn với `paper_id`, nên retrieval hit rate có thể đo trực tiếp bằng document ID. `top_k` được cấu hình trong `Settings.top_k=4`; khi so sánh baseline, corrupted và repaired, R1 phải giữ nguyên `top_k=4`, embedding model và test set để metric phản ánh thay đổi dữ liệu chứ không phải thay đổi cấu hình retrieval.
+1. `paper_id` là khóa quan trọng nhất của pipeline. Nếu `paper_id` null hoặc duplicate thì raw, clean, index, eval và answers không còn liên kết đáng tin cậy.
+2. Frozen test set giúp kết quả C3/C4 có ý nghĩa so sánh. Không được sửa test set giữa các trạng thái.
+3. Data quality signal và RAG metric cần được đọc cùng nhau. Corruption có thể không làm hit rate giảm nhưng vẫn làm answer quality giảm.
+4. Raw snapshot không chỉ là dữ liệu đầu vào mà còn là cơ chế phục hồi và audit.
+5. Vai trò R1 cần kiểm bằng artifact thật, không chỉ dựa vào terminal báo thành công.
 
-## 6. Một lỗi hoặc blocker đã xử lý
-
-- **Triệu chứng/lỗi nguyên văn:** `AttributeError: 'Paths' object has no attribute 'reports_dir'`
-- **Lệnh hoặc bước tái hiện:** chạy `script/run_phase1.py`.
-- **Nguyên nhân gốc:** `src/pipelines/phase1.py` tham chiếu `settings.paths.reports_dir`, nhưng `Paths` trong `src/core/config.py` không có field này.
-- **Cách xử lý:** Đổi sang `settings.paths.baseline_report.parent / "c2_integration_summary.json"`.
-- **Cách xác minh sau khi sửa:** chạy lại `PYTHONPATH=src ./.venv/Scripts/python.exe script/run_phase1.py`, output C2 pass.
-- **Điều học được:** Khi orchestrate pipeline, R1 phải dùng path contract có sẵn trong `core.config`, không tự thêm tên field ngoài config.
-
-## 7. Hiểu biết về luồng end-to-end
-
-1. Dữ liệu đi từ Crossref API vào `crossref_response.json` để giữ source lineage, sau đó được parse thành `crossref_records.json`. Cleaning chuyển raw records thành clean CSV/JSON có `text_for_embedding`. R4 dùng `text_for_embedding` để tạo embedding và ChromaDB index.
-2. Evaluation set gồm các câu hỏi factual và `ground_truth_doc_ids`. Khi agent trả lời, retrieval được xem là hit nếu `retrieved_doc_ids` chứa ít nhất một ground-truth document ID. Vì starter đang index mỗi paper như một chunk/document duy nhất, `ground_truth_doc_ids` có thể đối chiếu trực tiếp với `paper_id` trong Chroma metadata.
-3. Quality checks kiểm schema/completeness/uniqueness/validity như `paper_id` unique hay summary đủ dài. Freshness monitoring tập trung vào tuổi dữ liệu, latest/oldest published date và số dòng stale.
-4. Phải dùng cùng test set cho baseline, corrupted và repaired để khác biệt metric phản ánh thay đổi dữ liệu, không phải thay đổi câu hỏi hoặc ground truth. Tương tự, phải giữ cùng `top_k=4` và cùng embedding model trong cả ba trạng thái.
-5. Repair thành công khi repaired dataset được dựng lại từ raw snapshot, quality/freshness phục hồi so với corrupted, và metrics như retrieval hit rate, token F1, judge score phục hồi gần baseline.
-
-## 8. Phân tích kết quả
-
-### Metrics chính
-
-| Metric/signal | Baseline | Corrupted | Repaired | Nhận xét của cá nhân |
-| --- | ---: | ---: | ---: | --- |
-| `retrieval_hit_rate` | N/A | N/A | N/A | Chưa chạy C3/C4 |
-| `mean_token_f1` | N/A | N/A | N/A | Chưa chạy C3/C4 |
-| `judge_accuracy` | N/A | N/A | N/A | Chưa chạy C3/C4 |
-| `mean_judge_score` | N/A | N/A | N/A | Chưa chạy C3/C4 |
-| Quality checks | baseline freshness hiện fail | N/A | N/A | R5 quality report có `freshness_threshold` fail do 2 stale rows |
-| Freshness status | `is_fresh=false` | N/A | N/A | `stale_rows=2`, threshold 180 ngày |
-
-### Kết luận từ số liệu
-
-1. Chưa kết luận corruption -> agent metric vì C4 chưa chạy.
-2. Chưa kết luận repair -> metric recovery vì C4 chưa chạy.
-
-Kết quả khác kỳ vọng hiện tại: baseline quality freshness đang fail vì clean data có 2 stale rows theo ngưỡng 180 ngày. Đây là tín hiệu thật từ artifact `data/quality/freshness_report.json`, không phải lỗi pipeline C2.
-
-## 9. Điều học được và hướng cải thiện
-
-### Ba điều quan trọng nhất
-
-1. `paper_id` là khóa nối toàn bộ pipeline; nếu null/duplicate thì evaluation và repair đều mất ý nghĩa.
-2. Frozen test set phải được bảo vệ sớm, vì C3/C4 chỉ có ý nghĩa khi dùng cùng câu hỏi và cùng ground truth.
-3. R1 không chỉ chạy lệnh cuối; R1 phải kiểm contract giữa các role bằng artifact thật trước khi nhận bàn giao.
-
-### Nếu có thêm thời gian
-
-Hoàn thiện C3 để `phase1.py` chạy full baseline: build Chroma index, evaluate, lưu baseline metrics/answers, chạy quality/freshness và tạo `phase1_report.md`. Cách đo là kiểm đủ `data/results/baseline_metrics.json`, `data/results/baseline_answers.json`, `data/reports/phase1_report.md`.
-
-## 10. Cam kết của thành viên
+## 11. Cam kết cá nhân
 
 - [x] Nội dung báo cáo phản ánh đúng phần việc và mức hiểu của tôi.
-- [x] Tôi có thể giải thích luồng end-to-end, không chỉ module mình phụ trách.
-- [x] Mọi kết luận về kết quả đều có artifact hoặc metric để đối chiếu.
-- [x] Tôi không ghi "đã chạy thành công" cho phần chưa được kiểm chứng.
+- [x] Tôi có thể giải thích luồng end-to-end từ Crossref đến RAG metrics.
+- [x] Các kết luận về kết quả đều có artifact hoặc metric để đối chiếu.
 - [x] Báo cáo không chứa `.env`, API key, token hoặc secret.
-- [x] Báo cáo này không phải bản sao nguyên văn của báo cáo nhóm hoặc báo cáo thành viên khác.
+- [x] Báo cáo cá nhân không sao chép nguyên văn báo cáo nhóm.
 
-**Họ và tên:** Huy
+**Họ và tên:** Vũ Quang Huy  
 **Ngày xác nhận:** 2026-08-06
